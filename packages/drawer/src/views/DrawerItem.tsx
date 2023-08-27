@@ -1,5 +1,5 @@
 import { PlatformPressable } from '@react-navigation/elements';
-import { CommonActions, Link, Route, useTheme } from '@react-navigation/native';
+import { Link, useTheme } from '@react-navigation/native';
 import Color from 'color';
 import * as React from 'react';
 import {
@@ -11,16 +11,9 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import i18next from '../../../../../services/i18next'
 
 type Props = {
-  /**
-   * The route object which should be specified by the drawer item.
-   */
-  route: Route<string>;
-  /**
-   * The `href` to use for the anchor tag on web
-   */
-  href?: string;
   /**
    * The label text of the item.
    */
@@ -35,6 +28,10 @@ type Props = {
     size: number;
     color: string;
   }) => React.ReactNode;
+  /**
+   * URL to use for the link to the tab.
+   */
+  to?: string;
   /**
    * Whether to highlight the drawer item as active.
    */
@@ -97,32 +94,29 @@ type Props = {
 };
 
 const LinkPressable = ({
-  route,
-  href,
   children,
   style,
   onPress,
   onLongPress,
   onPressIn,
   onPressOut,
+  to,
   accessibilityRole,
   ...rest
 }: Omit<React.ComponentProps<typeof PlatformPressable>, 'style'> & {
   style: StyleProp<ViewStyle>;
 } & {
-  route: Route<string>;
-  href?: string;
+  to?: string;
   children: React.ReactNode;
   onPress?: () => void;
 }) => {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === 'web' && to) {
     // React Native Web doesn't forward `onClick` if we use `TouchableWithoutFeedback`.
     // We need to use `onClick` to be able to prevent default browser handling of links.
     return (
       <Link
         {...rest}
-        href={href}
-        action={CommonActions.navigate(route.name, route.params)}
+        to={to}
         style={[styles.button, style]}
         onPress={(e: any) => {
           if (
@@ -158,15 +152,14 @@ const LinkPressable = ({
 /**
  * A component used to show an action item with an icon and a label in a navigation drawer.
  */
-export function DrawerItem(props: Props) {
-  const { colors, fonts } = useTheme();
+export default function DrawerItem(props: Props) {
+  const { colors } = useTheme();
 
   const {
-    route,
-    href,
     icon,
     label,
     labelStyle,
+    to,
     focused = false,
     allowFontScaling,
     activeTintColor = colors.primary,
@@ -205,11 +198,41 @@ export function DrawerItem(props: Props) {
         accessibilityState={{ selected: focused }}
         pressColor={pressColor}
         pressOpacity={pressOpacity}
-        route={route}
-        href={href}
+        to={to}
       >
-        <React.Fragment>
-          {iconNode}
+        <React.Fragment >
+          {i18next.language==='ar'?
+                   <>
+              
+                 <View
+                   style={[
+                     styles.label,
+                     { marginLeft: iconNode ? 32 : 0, marginVertical: 5 },
+                   ]}
+                 >
+                   {typeof label === 'string' ? (
+                     <Text
+                       numberOfLines={1}
+                       allowFontScaling={allowFontScaling}
+                       style={[
+                         {
+                           color,
+                           fontWeight: '500',
+                         },
+                         labelStyle,
+                       ]}
+                     >
+                       {label}
+                     </Text>
+                   ) : (
+                     label({ color, focused })
+                   )}
+                 </View>
+                 {iconNode}
+                 </>
+          :
+          <>
+            {iconNode}
           <View
             style={[
               styles.label,
@@ -220,7 +243,13 @@ export function DrawerItem(props: Props) {
               <Text
                 numberOfLines={1}
                 allowFontScaling={allowFontScaling}
-                style={[{ color }, fonts.medium, labelStyle]}
+                style={[
+                  {
+                    color,
+                    fontWeight: '500',
+                  },
+                  labelStyle,
+                ]}
               >
                 {label}
               </Text>
@@ -228,6 +257,10 @@ export function DrawerItem(props: Props) {
               label({ color, focused })
             )}
           </View>
+          </>
+          
+          }
+        
         </React.Fragment>
       </LinkPressable>
     </View>
